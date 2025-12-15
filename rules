@@ -1,0 +1,5 @@
+- Gerar Senha e Salvar com o Nome Desejado.
+- Gerar um arquivo Criptografado com todas as senhas geradas e salvas.
+- Arquivo necessita de senha para ser importado (é a palavra utilizada como cifra).
+- Software lê e atualiza as novas senhas.
+- É possível visualizar todas as senhas em uma pagina web local.
