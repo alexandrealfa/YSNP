@@ -1,0 +1,47 @@
+# Binários do build
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Diretórios comuns
+/vendor/
+/bin/
+/build/
+/dist/
+
+# Arquivos do Go
+*.log
+*.tmp
+*.cache
+*.prof
+
+# Arquivos de editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+*.DS_Store
+
+# Arquivos do sistema
+Thumbs.db
+ehthumbs.db
+
+# Módulos baixados (opcional, caso não deseje versionar o vendor)
+/vendor/
+
+# Testes e cobertura
+*.coverprofile
+*.testresult
+*.benchresult
+
+# Go Work
+go.work
+go.work.sum
+
+#output file
+output_encoder.jsonl
