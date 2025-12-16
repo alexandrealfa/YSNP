@@ -8,6 +8,8 @@ package cmd
 import (
 	"YSNP/pkg/entity"
 	"bufio"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"github.com/fatih/color"
@@ -29,6 +31,10 @@ type PassSchema struct {
 	Name string `json:"name"`
 	Pass string `json:"pass"`
 	Time string `json:"time"`
+}
+
+type SaveSchema interface {
+	save(vaultName string) error
 }
 
 // passwordCmd represents the password command
@@ -73,11 +79,28 @@ to quickly create a Cobra application.`,
 				filename = vaultName
 			}
 
-			schema.save(filename)
+			var saver SaveSchema
+
+			saver = schema
+
+			if err := saver.save(filename); err != nil {
+				log.Fatal("error :", err)
+			}
 
 			fmt.Println("Password saved in vault.")
 		}
 	},
+}
+
+func generateRsaKeys() (privateKey *rsa.PrivateKey, publicKey *rsa.PublicKey) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	publicKey = &privateKey.PublicKey
+
+	return
 }
 
 func newPassword(name, pass string) (*PassSchema, error) {
@@ -88,7 +111,7 @@ func newPassword(name, pass string) (*PassSchema, error) {
 	}, nil
 }
 
-func (p *PassSchema) save(vaultName string) {
+func (p *PassSchema) save(vaultName string) error {
 	p.Time = time.Now().Format(time.DateTime)
 
 	file, err := os.OpenFile(
@@ -97,7 +120,7 @@ func (p *PassSchema) save(vaultName string) {
 		0644,
 	)
 	if err != nil {
-		log.Fatal("error to open file:", err)
+		return fmt.Errorf("open file: %w", err)
 	}
 	defer file.Close()
 
@@ -105,8 +128,10 @@ func (p *PassSchema) save(vaultName string) {
 	encoder.SetIndent("", "  ")
 
 	if err := encoder.Encode(p); err != nil {
-		log.Fatal("Error encoding JSON to file:", err)
+		return fmt.Errorf("encode json: %w", err)
 	}
+
+	return nil
 }
 
 func init() {
