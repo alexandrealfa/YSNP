@@ -6,10 +6,9 @@ Copyright © 2025 Alexandre Alfa <linkedin.com/in/alexandrealfa>
 package cmd
 
 import (
+	"YSNP/internal"
 	"YSNP/pkg/entity"
 	"bufio"
-	"crypto/rand"
-	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"github.com/fatih/color"
@@ -27,10 +26,12 @@ var (
 	vaultName string
 )
 
+type Password string
+
 type PassSchema struct {
-	Name string `json:"name"`
-	Pass string `json:"pass"`
-	Time string `json:"time"`
+	Name string   `json:"name"`
+	Pass Password `json:"pass"`
+	Time string   `json:"time"`
 }
 
 type SaveSchema interface {
@@ -68,7 +69,7 @@ to quickly create a Cobra application.`,
 				log.Fatal("Password name cannot be empty")
 			}
 
-			schema, err := newPassword(name, password)
+			schema, err := newPassword(name, Password(password))
 			if err != nil {
 				log.Fatal("error to create Password Schema: ", err)
 			}
@@ -87,23 +88,45 @@ to quickly create a Cobra application.`,
 				log.Fatal("error :", err)
 			}
 
+			private, public, err := internal.GenerateRsaKeys()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			color.New(color.BgGreen, color.FgWhite).Println("your key: ", private)
+
+			plainBytes, err := os.ReadFile(filename)
+			if err != nil {
+				log.Fatal(err)
+			}
+			encryptedBytes, err := internal.EncryptJSONWithPublicKey(public, plainBytes)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if err := os.WriteFile(filename, encryptedBytes, 0600); err != nil {
+				log.Fatal(err)
+			}
 			fmt.Println("Password saved in vault.")
+
+			encBytes, err := os.ReadFile("output_encoder.json.enc")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			decryptedBytes, err := internal.DecryptJSONWithPrivateKey(private, encBytes)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if err := os.WriteFile(filename, decryptedBytes, 0600); err != nil {
+				log.Fatal(err)
+			}
 		}
 	},
 }
 
-func generateRsaKeys() (privateKey *rsa.PrivateKey, publicKey *rsa.PublicKey) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	publicKey = &privateKey.PublicKey
-
-	return
-}
-
-func newPassword(name, pass string) (*PassSchema, error) {
+func newPassword(name string, pass Password) (*PassSchema, error) {
 	return &PassSchema{
 		name,
 		pass,
